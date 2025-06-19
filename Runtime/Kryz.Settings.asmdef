@@ -1,0 +1,17 @@
+{
+    "name": "Kryz.Settings",
+    "rootNamespace": "Kryz.Settings",
+    "references": [
+        "GUID:6562b918f46669b4ba9dd7649c5ee487",
+        "GUID:07d98fb69f11d6d49a37010126b907a5"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
