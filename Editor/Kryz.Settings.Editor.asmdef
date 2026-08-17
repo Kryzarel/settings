@@ -1,12 +1,15 @@
 {
-    "name": "Kryz.Settings",
-    "rootNamespace": "Kryz.Settings",
+    "name": "Kryz.Settings.Editor",
+    "rootNamespace": "Kryz.Settings.Editor",
     "references": [
         "Kryz.Utils",
         "Kryz.UnityUtils",
-        "Kryz.UnityUtils.Editor"
+        "Kryz.UnityUtils.Editor",
+        "Kryz.Settings"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
