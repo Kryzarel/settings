@@ -4,7 +4,12 @@ namespace Kryz.Settings
 {
 	public class SettingsDatabase : ISettingsDatabase
 	{
-		private readonly Dictionary<ulong, SettingsAsset> settings = new();
+		private readonly Dictionary<ulong, SettingsAsset> settings;
+
+		public SettingsDatabase()
+		{
+			settings = new();
+		}
 
 		public T Get<T>(ulong id) where T : SettingsAsset => (T)settings[id];
 
@@ -19,13 +24,43 @@ namespace Kryz.Settings
 			return false;
 		}
 
-		public void InitializeSettings(IEnumerable<SettingsAsset> settings)
+		public bool TryGetSingleton<T>(out T asset) where T : SettingsAsset
 		{
-			this.settings.Clear();
+			asset = null;
 
-			foreach (SettingsAsset item in settings)
+			foreach (SettingsAsset item in settings.Values)
 			{
-				this.settings[item.Id] = item;
+				if (item is T derived)
+				{
+					if (asset != null)
+					{
+						return false;
+					}
+					asset = derived;
+				}
+			}
+			return asset != null;
+		}
+
+		public void GetAllSettingsOfType<T>(IList<T> values) where T : SettingsAsset
+		{
+			foreach (SettingsAsset item in settings.Values)
+			{
+				if (item is T derived)
+				{
+					values.Add(derived);
+				}
+			}
+		}
+
+		public IEnumerable<T> GetAllSettingsOfType<T>() where T : SettingsAsset
+		{
+			foreach (SettingsAsset item in settings.Values)
+			{
+				if (item is T derived)
+				{
+					yield return derived;
+				}
 			}
 		}
 	}
