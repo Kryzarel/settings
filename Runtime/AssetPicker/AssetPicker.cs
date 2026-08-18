@@ -4,15 +4,10 @@ using UnityEngine;
 namespace Kryz.Settings
 {
 	[Serializable]
-	public class AssetPicker
+	public abstract class AssetPicker<T> where T : UnityEngine.Object
 	{
 		[SerializeField] uint id;
 
 		public uint Id => id;
-	}
-
-	[Serializable]
-	public class AssetPicker<T> : AssetPicker where T : UnityEngine.Object
-	{
 	}
 }

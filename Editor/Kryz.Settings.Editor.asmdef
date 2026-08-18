@@ -2,8 +2,6 @@
     "name": "Kryz.Settings.Editor",
     "rootNamespace": "Kryz.Settings.Editor",
     "references": [
-        "Kryz.Utils",
-        "Kryz.UnityUtils",
         "Kryz.UnityUtils.Editor",
         "Kryz.Settings"
     ],

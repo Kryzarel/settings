@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Kryz.UnityUtils.Editor;
 using UnityEditor;
 
 namespace Kryz.Settings.Editor
 {
-	public static class ResourcesCatalogManager
+	public static class SettingsCatalogManager
 	{
 		private class PostProcessor : AssetPostprocessor
 		{
@@ -16,7 +15,7 @@ namespace Kryz.Settings.Editor
 			public static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths, bool didDomainReload)
 			{
 				bool setDirty = false;
-				ResourcesCatalog catalog = SingletonScriptableObjectUtils.GetSingleton<ResourcesCatalog>();
+				SettingsCatalog catalog = SingletonScriptableObjectUtils.GetSingleton<SettingsCatalog>();
 
 				if (catalog.version != version)
 				{
@@ -39,7 +38,35 @@ namespace Kryz.Settings.Editor
 			}
 		}
 
-		private static bool UpdateByGUID(ResourcesCatalog catalog, GUID[] guids)
+		private class ModificationProcessor : AssetModificationProcessor
+		{
+			public static string[] OnWillSaveAssets(string[] paths)
+			{
+				foreach (string path in paths)
+				{
+					SettingsAsset settingsAsset = AssetDatabase.LoadAssetAtPath<SettingsAsset>(path);
+					if (settingsAsset == null)
+						continue;
+
+					GUID guid = AssetDatabase.GUIDFromAssetPath(path);
+					uint id = (uint)guid.GetHashCode();
+					UpdateSettingsAssetData(settingsAsset, id);
+				}
+				return paths;
+			}
+		}
+
+		private static void UpdateSettingsAssetData(SettingsAsset settingsAsset, uint id)
+		{
+			string name = settingsAsset.name;
+			if (settingsAsset.Id != id || !settingsAsset.Name.Equals(name, StringComparison.Ordinal))
+			{
+				settingsAsset.SetIdAndName(id, name);
+				EditorUtility.SetDirty(settingsAsset);
+			}
+		}
+
+		private static bool UpdateByGUID(SettingsCatalog catalog, GUID[] guids)
 		{
 			bool setDirty = false;
 
@@ -51,7 +78,7 @@ namespace Kryz.Settings.Editor
 			return setDirty;
 		}
 
-		private static bool UpdateByPath(ResourcesCatalog catalog, string[] paths, bool delete)
+		private static bool UpdateByPath(SettingsCatalog catalog, string[] paths, bool delete)
 		{
 			bool setDirty = false;
 
@@ -63,7 +90,7 @@ namespace Kryz.Settings.Editor
 			return setDirty;
 		}
 
-		private static bool UpdateEntry(Dictionary<uint, string> catalog, GUID guid = default, string path = "", string resourcesPath = "", bool delete = false)
+		private static bool UpdateEntry(Dictionary<uint, SettingsAsset> catalog, GUID guid = default, string path = "", bool delete = false)
 		{
 			if (guid == default) guid = AssetDatabase.GUIDFromAssetPath(path);
 			if (string.IsNullOrEmpty(path)) path = AssetDatabase.GUIDToAssetPath(guid);
@@ -71,21 +98,22 @@ namespace Kryz.Settings.Editor
 			if (AssetDatabase.IsValidFolder(path))
 				return false;
 
-			if (!delete && string.IsNullOrEmpty(resourcesPath)) resourcesPath = AssetDatabaseUtilities.GetPathRelativeToResources(path);
-
+			SettingsAsset settingsAsset = AssetDatabase.LoadAssetByGUID<SettingsAsset>(guid);
 			uint id = (uint)guid.GetHashCode();
 
-			if (delete || string.IsNullOrEmpty(resourcesPath))
+			if (delete || settingsAsset == null || !settingsAsset.Enabled)
 			{
 				return catalog.Remove(id);
 			}
-			else if (catalog.TryGetValue(id, out string current) && current.Equals(resourcesPath, StringComparison.Ordinal))
+
+			UpdateSettingsAssetData(settingsAsset, id);
+
+			if (catalog.TryGetValue(id, out SettingsAsset current) && current == settingsAsset)
 			{
 				return false;
 			}
 
-			catalog[id] = resourcesPath;
-			return true;
+			return catalog.TryAdd(id, settingsAsset);
 		}
 	}
 }

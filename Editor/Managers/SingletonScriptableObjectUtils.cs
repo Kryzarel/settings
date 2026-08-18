@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace Kryz.Settings.Editor
 {
-	public class SingletonScriptableObjectManager<T> : AssetPostprocessor where T : SingletonScriptableObject<T>
+	public class SingletonScriptableObjectUtils
 	{
-		public static T GetSingleton()
+		public static T GetSingleton<T>() where T : SingletonScriptableObject<T>
 		{
 			T[] objects = AssetDatabaseUtilities.FindAssetsOfType<T>();
 

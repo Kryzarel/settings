@@ -1,27 +1,38 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using Kryz.UnityUtils;
 using UnityEngine;
 
 namespace Kryz.Settings
 {
-	public class SettingsCatalog : SingletonScriptableObject<SettingsCatalog>
+	public class SettingsCatalog : SingletonScriptableObject<SettingsCatalog>, ISerializationCallbackReceiver
 	{
-		[SerializeField] internal List<SettingsAsset> assets;
+		[SerializeField, ReadOnly] internal int version;
+		[SerializeField, ReadOnly] List<SettingsAsset> assetList = new();
 
-		private readonly Dictionary<uint, SettingsAsset> dict;
+		internal readonly Dictionary<uint, SettingsAsset> assets = new();
 
-		public IReadOnlyDictionary<uint, SettingsAsset> Assets => dict;
+		private ReadOnlyDictionary<uint, SettingsAsset> readOnlyAssets;
 
-		public void OnBeforeSerialize()
+		public IReadOnlyDictionary<uint, SettingsAsset> Assets => readOnlyAssets ??= new(assets);
+
+		void ISerializationCallbackReceiver.OnBeforeSerialize()
 		{
+			assetList.Clear();
+
+			foreach (SettingsAsset item in assets.Values)
+			{
+				assetList.Add(item);
+			}
 		}
 
-		public void OnAfterDeserialize()
+		void ISerializationCallbackReceiver.OnAfterDeserialize()
 		{
-			dict.Clear();
+			assets.Clear();
 
-			foreach (SettingsAsset item in assets)
+			foreach (SettingsAsset item in assetList)
 			{
-				dict[item.Id] = item;
+				assets[item.Id] = item;
 			}
 		}
 	}

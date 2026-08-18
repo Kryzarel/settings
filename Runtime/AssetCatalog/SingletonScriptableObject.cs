@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Kryz.Settings
 {
-	public abstract class SingletonScriptableObject<T> : SettingsAsset where T : SingletonScriptableObject<T>
+	public abstract class SingletonScriptableObject<T> : ScriptableObject where T : SingletonScriptableObject<T>
 	{
 		private static T instance;
 

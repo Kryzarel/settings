@@ -7,81 +7,86 @@ using Object = UnityEngine.Object;
 
 namespace Kryz.Settings.Editor
 {
-	[CustomPropertyDrawer(typeof(AssetPicker), useForChildren: true)]
+	[CustomPropertyDrawer(typeof(AssetPicker<>), useForChildren: true)]
 	public class AssetPickerDrawer : PropertyDrawer
 	{
+		private const string resourcesWarning = "<b>Warning:</b> The assigned object is not in " + nameof(ResourcesCatalog) + " nor " + nameof(SettingsCatalog) + ".";
+
 		public override VisualElement CreatePropertyGUI(SerializedProperty property)
 		{
 			VisualElement root = new();
 
-			ObjectField objectField = new(property.displayName);
+			Type pickerType = property.boxedValue.GetType();
+
+			ObjectField objectField = new(property.displayName)
+			{
+				objectType = GetAssetType(pickerType),
+				allowSceneObjects = false
+			};
 			objectField.AddToClassList("unity-base-field__aligned");
-			objectField.AddToClassList("unity-base-field__inspector-field");
 			root.Add(objectField);
 
-			AssetPicker picker = property.boxedValue as AssetPicker;
-			objectField.objectType = GetAssetType(picker.GetType());
-			objectField.allowSceneObjects = false;
+			HelpBox warningBox = new(resourcesWarning, HelpBoxMessageType.Warning);
+			warningBox.style.display = DisplayStyle.None;
+			root.Add(warningBox);
 
 			SerializedProperty idProperty = property.FindPropertyRelative("id");
 
-			HelpBox warningBox = new($"<b>Warning:</b> The assigned object is not a {nameof(SettingsAsset)} or is not in Resources.", HelpBoxMessageType.Warning);
-			root.Add(warningBox);
-
-			objectField.value = GetAssetFromId(idProperty);
-			warningBox.style.display = !IsValidAsset(objectField.value) ? DisplayStyle.Flex : DisplayStyle.None;
-
-			objectField.RegisterValueChangedCallback(c =>
+			void Refresh(SerializedProperty idProperty)
 			{
-				SetIdFromAsset(idProperty, c.newValue);
-				warningBox.style.display = !IsValidAsset(c.newValue) ? DisplayStyle.Flex : DisplayStyle.None;
+				uint id = idProperty.uintValue;
+				Object asset = GetAssetFromId(id, objectField.objectType);
+				objectField.SetValueWithoutNotify(asset);
+				warningBox.style.display = IsValidId(id) ? DisplayStyle.None : DisplayStyle.Flex;
+			}
+
+			Refresh(idProperty);
+
+			objectField.TrackPropertyValue(idProperty, Refresh);
+
+			objectField.RegisterValueChangedCallback(evt =>
+			{
+				idProperty.serializedObject.Update();
+				idProperty.uintValue = GetIdFromAsset(evt.newValue);
+				idProperty.serializedObject.ApplyModifiedProperties();
 			});
 			return root;
 		}
 
 		private static bool IsValidId(uint id)
 		{
-			return ResourcesCatalog.Instance.Assets.ContainsKey(id) || EditorSettingsManager.Settings.ContainsKey(id);
+			return ResourcesCatalog.Instance.Assets.ContainsKey(id) || SettingsCatalog.Instance.Assets.ContainsKey(id);
 		}
 
-		private static bool IsValidAsset(Object asset)
+		private static Object GetAssetFromId(uint id, Type type)
 		{
-			if (asset == null) return true;
-			string path = AssetDatabase.GetAssetPath(asset);
-			GUID guid = AssetDatabase.GUIDFromAssetPath(path);
-			uint id = (uint)guid.GetHashCode();
-			return IsValidId(id);
-		}
-
-		private static Object GetAssetFromId(SerializedProperty idProperty)
-		{
-			uint id = (uint)idProperty.intValue;
-
 			if (ResourcesCatalog.Instance.Assets.TryGetValue(id, out string resourcesPath))
 				return Resources.Load(resourcesPath);
 
 			if (EditorSettingsManager.Settings.TryGetValue(id, out SettingsAsset asset))
 				return asset;
 
+			GUID[] guids = AssetDatabase.FindAssetGUIDs("t:" + type.Name);
+			foreach (GUID guid in guids)
+			{
+				if (id == (uint)guid.GetHashCode())
+				{
+					return AssetDatabase.LoadAssetByGUID(guid, type);
+				}
+			}
+
 			return null;
 		}
 
-		private static void SetIdFromAsset(SerializedProperty idProperty, Object asset)
+		private static uint GetIdFromAsset(Object asset)
 		{
+			if (asset == null)
+				return 0;
+
 			string path = AssetDatabase.GetAssetPath(asset);
 			GUID guid = AssetDatabase.GUIDFromAssetPath(path);
 			uint id = (uint)guid.GetHashCode();
-
-			if (!IsValidId(id))
-			{
-				id = 0;
-			}
-
-			if (idProperty.uintValue != id)
-			{
-				idProperty.uintValue = id;
-				idProperty.serializedObject.ApplyModifiedProperties();
-			}
+			return id;
 		}
 
 		private static Type GetAssetType(Type type)

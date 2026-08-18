@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Kryz.UnityUtils;
 using UnityEngine;
 
@@ -8,32 +9,38 @@ namespace Kryz.Settings
 	public class ResourcesCatalog : SingletonScriptableObject<ResourcesCatalog>, ISerializationCallbackReceiver
 	{
 		[Serializable]
-		internal struct Data : IEquatable<Data>
+		private struct Data
 		{
 			public uint Id;
 			public string Path;
-
-			public readonly bool Equals(Data other) => Id == other.Id && Path.Equals(other.Path, StringComparison.Ordinal);
 		}
 
 		[SerializeField, ReadOnly] internal int version;
-		[SerializeField, ReadOnly] internal List<Data> assets;
+		[SerializeField, ReadOnly] List<Data> assetList = new();
 
-		private readonly Dictionary<uint, string> dict = new();
+		internal readonly Dictionary<uint, string> assets = new();
 
-		public IReadOnlyDictionary<uint, string> Assets => dict;
+		private ReadOnlyDictionary<uint, string> readOnlyAssets;
 
-		public void OnBeforeSerialize()
+		public IReadOnlyDictionary<uint, string> Assets => readOnlyAssets ??= new(assets);
+
+		void ISerializationCallbackReceiver.OnBeforeSerialize()
 		{
+			assetList.Clear();
+
+			foreach (KeyValuePair<uint, string> item in assets)
+			{
+				assetList.Add(new Data { Id = item.Key, Path = item.Value });
+			}
 		}
 
-		public void OnAfterDeserialize()
+		void ISerializationCallbackReceiver.OnAfterDeserialize()
 		{
-			dict.Clear();
+			assets.Clear();
 
-			foreach (Data item in assets)
+			foreach (Data item in assetList)
 			{
-				dict[item.Id] = item.Path;
+				assets[item.Id] = item.Path;
 			}
 		}
 	}
