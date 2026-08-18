@@ -1,33 +1,18 @@
 using System;
-using Kryz.UnityUtils;
 using UnityEngine;
 
 namespace Kryz.Settings
 {
 	[Serializable]
-	public abstract class AssetPicker<TIdentifier, TAsset> : ISerializationCallbackReceiver where TAsset : UnityEngine.Object
+	public class AssetPicker
 	{
-		[SerializeField] protected TAsset asset;
-		[SerializeField, ReadOnly] TIdentifier id;
+		[SerializeField] uint id;
 
-		public TIdentifier Id => id;
+		public uint Id => id;
+	}
 
-		public virtual void OnBeforeSerialize()
-		{
-			if (Application.isEditor)
-			{
-				id = GetIdentifier();
-			}
-		}
-
-		public virtual void OnAfterDeserialize()
-		{
-			if (!Application.isEditor && Application.isPlaying)
-			{
-				asset = null;
-			}
-		}
-
-		protected abstract TIdentifier GetIdentifier();
+	[Serializable]
+	public class AssetPicker<T> : AssetPicker where T : UnityEngine.Object
+	{
 	}
 }

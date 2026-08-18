@@ -1,26 +1,24 @@
+using System.Diagnostics;
 using Kryz.UnityUtils;
 using UnityEngine;
 
 namespace Kryz.Settings
 {
-	public abstract class SettingsAsset : ScriptableObject, ISerializationCallbackReceiver
+	public abstract class SettingsAsset : ScriptableObject
 	{
-		[SerializeField, HideInInspector] string assetName; // Used to serialize a human readable name.
 		[SerializeField, ReadOnly] uint id;
+		[SerializeField, ReadOnly] string settingName; // Used to serialize a human readable name.
 		[SerializeField] bool enabled = true;
 
 		public uint Id => id;
+		public string Name => settingName;
 		public bool Enabled => enabled;
 
-		public virtual void OnBeforeSerialize()
+		[Conditional("UNITY_EDITOR")]
+		internal void SetIdAndName(uint id, string name)
 		{
-			if (Application.isEditor)
-			{
-				assetName = SharedFunctions.GetAssetName?.Invoke(this) ?? assetName;
-				id = SharedFunctions.GetSettingsId?.Invoke(this) ?? id;
-			}
+			this.id = id;
+			settingName = name;
 		}
-
-		public virtual void OnAfterDeserialize() { }
 	}
 }
