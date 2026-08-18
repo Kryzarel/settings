@@ -12,15 +12,20 @@ namespace Kryz.Settings
 			{
 				if (instance == null)
 				{
-					instance = Resources.LoadAll<T>("")?[0];
+					instance = Resources.Load<T>("Kryz.Singleton/" + typeof(T).Name);
 
 					if (instance == null)
 					{
-						Debug.LogError($"{typeof(T).Name} not found in Resources.");
+						Debug.LogError($"{"Kryz.Singleton/" + typeof(T).Name} not found in Resources.");
 					}
 				}
 				return instance;
 			}
+		}
+
+		public static void LoadAsync()
+		{
+			Resources.LoadAsync<T>("Kryz.Singleton/" + typeof(T).Name);
 		}
 	}
 }
