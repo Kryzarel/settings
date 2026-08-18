@@ -63,7 +63,7 @@ namespace Kryz.Settings.Editor
 			return setDirty;
 		}
 
-		private static bool UpdateEntry(Dictionary<uint, string> catalog, GUID guid = default, string path = "", string resourcesPath = "", bool delete = false)
+		private static bool UpdateEntry(Dictionary<ulong, string> catalog, GUID guid = default, string path = "", string resourcesPath = "", bool delete = false)
 		{
 			if (guid == default) guid = AssetDatabase.GUIDFromAssetPath(path);
 			if (string.IsNullOrEmpty(path)) path = AssetDatabase.GUIDToAssetPath(guid);
@@ -73,7 +73,7 @@ namespace Kryz.Settings.Editor
 
 			if (!delete && string.IsNullOrEmpty(resourcesPath)) resourcesPath = AssetDatabaseUtilities.GetPathRelativeToResources(path);
 
-			uint id = (uint)guid.GetHashCode();
+			ulong id = guid.GetAssetId64();
 
 			if (delete || string.IsNullOrEmpty(resourcesPath))
 			{

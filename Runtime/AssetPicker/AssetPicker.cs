@@ -6,8 +6,8 @@ namespace Kryz.Settings
 	[Serializable]
 	public abstract class AssetPicker<T> where T : UnityEngine.Object
 	{
-		[SerializeField] uint id;
+		[SerializeField] ulong id;
 
-		public uint Id => id;
+		public ulong Id => id;
 	}
 }

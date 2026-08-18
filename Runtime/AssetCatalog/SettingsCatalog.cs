@@ -10,11 +10,11 @@ namespace Kryz.Settings
 		[SerializeField, ReadOnly] internal int version;
 		[SerializeField, ReadOnly] List<SettingsAsset> assetList = new();
 
-		internal readonly Dictionary<uint, SettingsAsset> assets = new();
+		internal readonly Dictionary<ulong, SettingsAsset> assets = new();
 
-		private ReadOnlyDictionary<uint, SettingsAsset> readOnlyAssets;
+		private ReadOnlyDictionary<ulong, SettingsAsset> readOnlyAssets;
 
-		public IReadOnlyDictionary<uint, SettingsAsset> Assets => readOnlyAssets ??= new(assets);
+		public IReadOnlyDictionary<ulong, SettingsAsset> Assets => readOnlyAssets ??= new(assets);
 
 		void ISerializationCallbackReceiver.OnBeforeSerialize()
 		{

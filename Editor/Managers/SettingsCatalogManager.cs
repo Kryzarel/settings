@@ -49,14 +49,14 @@ namespace Kryz.Settings.Editor
 						continue;
 
 					GUID guid = AssetDatabase.GUIDFromAssetPath(path);
-					uint id = (uint)guid.GetHashCode();
+					ulong id = guid.GetAssetId64();
 					UpdateSettingsAssetData(settingsAsset, id);
 				}
 				return paths;
 			}
 		}
 
-		private static void UpdateSettingsAssetData(SettingsAsset settingsAsset, uint id)
+		private static void UpdateSettingsAssetData(SettingsAsset settingsAsset, ulong id)
 		{
 			string name = settingsAsset.name;
 			if (settingsAsset.Id != id || !settingsAsset.Name.Equals(name, StringComparison.Ordinal))
@@ -90,7 +90,7 @@ namespace Kryz.Settings.Editor
 			return setDirty;
 		}
 
-		private static bool UpdateEntry(Dictionary<uint, SettingsAsset> catalog, GUID guid = default, string path = "", bool delete = false)
+		private static bool UpdateEntry(Dictionary<ulong, SettingsAsset> catalog, GUID guid = default, string path = "", bool delete = false)
 		{
 			if (guid == default) guid = AssetDatabase.GUIDFromAssetPath(path);
 			if (string.IsNullOrEmpty(path)) path = AssetDatabase.GUIDToAssetPath(guid);
@@ -99,7 +99,7 @@ namespace Kryz.Settings.Editor
 				return false;
 
 			SettingsAsset settingsAsset = AssetDatabase.LoadAssetByGUID<SettingsAsset>(guid);
-			uint id = (uint)guid.GetHashCode();
+			ulong id = guid.GetAssetId64();
 
 			if (delete || settingsAsset == null || !settingsAsset.Enabled)
 			{

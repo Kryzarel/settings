@@ -11,24 +11,24 @@ namespace Kryz.Settings
 		[Serializable]
 		private struct Data
 		{
-			public uint Id;
+			public ulong Id;
 			public string Path;
 		}
 
 		[SerializeField, ReadOnly] internal int version;
 		[SerializeField, ReadOnly] List<Data> assetList = new();
 
-		internal readonly Dictionary<uint, string> assets = new();
+		internal readonly Dictionary<ulong, string> assets = new();
 
-		private ReadOnlyDictionary<uint, string> readOnlyAssets;
+		private ReadOnlyDictionary<ulong, string> readOnlyAssets;
 
-		public IReadOnlyDictionary<uint, string> Assets => readOnlyAssets ??= new(assets);
+		public IReadOnlyDictionary<ulong, string> Assets => readOnlyAssets ??= new(assets);
 
 		void ISerializationCallbackReceiver.OnBeforeSerialize()
 		{
 			assetList.Clear();
 
-			foreach (KeyValuePair<uint, string> item in assets)
+			foreach (KeyValuePair<ulong, string> item in assets)
 			{
 				assetList.Add(new Data { Id = item.Key, Path = item.Value });
 			}

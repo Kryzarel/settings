@@ -10,7 +10,7 @@ namespace Kryz.Settings.Editor
 	[CustomPropertyDrawer(typeof(AssetPicker<>), useForChildren: true)]
 	public class AssetPickerDrawer : PropertyDrawer
 	{
-		private const string resourcesWarning = "<b>Warning:</b> The assigned object is not in " + nameof(ResourcesCatalog) + " nor " + nameof(SettingsCatalog) + ".";
+		private const string warning = "<b>Warning:</b> The assigned object is not in " + nameof(ResourcesCatalog) + " nor " + nameof(SettingsCatalog) + ".";
 
 		public override VisualElement CreatePropertyGUI(SerializedProperty property)
 		{
@@ -26,7 +26,7 @@ namespace Kryz.Settings.Editor
 			objectField.AddToClassList("unity-base-field__aligned");
 			root.Add(objectField);
 
-			HelpBox warningBox = new(resourcesWarning, HelpBoxMessageType.Warning);
+			HelpBox warningBox = new(warning, HelpBoxMessageType.Warning);
 			warningBox.style.display = DisplayStyle.None;
 			root.Add(warningBox);
 
@@ -34,10 +34,10 @@ namespace Kryz.Settings.Editor
 
 			void Refresh(SerializedProperty idProperty)
 			{
-				uint id = idProperty.uintValue;
+				ulong id = idProperty.ulongValue;
 				Object asset = GetAssetFromId(id, objectField.objectType);
 				objectField.SetValueWithoutNotify(asset);
-				warningBox.style.display = IsValidId(id) ? DisplayStyle.None : DisplayStyle.Flex;
+				warningBox.style.display = id == 0 || IsValidId(id) ? DisplayStyle.None : DisplayStyle.Flex;
 			}
 
 			Refresh(idProperty);
@@ -47,45 +47,43 @@ namespace Kryz.Settings.Editor
 			objectField.RegisterValueChangedCallback(evt =>
 			{
 				idProperty.serializedObject.Update();
-				idProperty.uintValue = GetIdFromAsset(evt.newValue);
+				idProperty.ulongValue = GetIdFromAsset(evt.newValue);
 				idProperty.serializedObject.ApplyModifiedProperties();
 			});
 			return root;
 		}
 
-		private static bool IsValidId(uint id)
+		private static bool IsValidId(ulong id)
 		{
 			return ResourcesCatalog.Instance.Assets.ContainsKey(id) || SettingsCatalog.Instance.Assets.ContainsKey(id);
 		}
 
-		private static Object GetAssetFromId(uint id, Type type)
+		private static Object GetAssetFromId(ulong id, Type type)
 		{
 			if (ResourcesCatalog.Instance.Assets.TryGetValue(id, out string resourcesPath))
 				return Resources.Load(resourcesPath);
 
-			if (EditorSettingsManager.Settings.TryGetValue(id, out SettingsAsset asset))
+			if (SettingsCatalog.Instance.Assets.TryGetValue(id, out SettingsAsset asset))
 				return asset;
 
-			GUID[] guids = AssetDatabase.FindAssetGUIDs("t:" + type.Name);
-			foreach (GUID guid in guids)
+			foreach (GUID guid in AssetDatabase.FindAssetGUIDs("t:" + type.Name))
 			{
-				if (id == (uint)guid.GetHashCode())
+				if (id == guid.GetAssetId64())
 				{
 					return AssetDatabase.LoadAssetByGUID(guid, type);
 				}
 			}
-
 			return null;
 		}
 
-		private static uint GetIdFromAsset(Object asset)
+		private static ulong GetIdFromAsset(Object asset)
 		{
 			if (asset == null)
 				return 0;
 
 			string path = AssetDatabase.GetAssetPath(asset);
 			GUID guid = AssetDatabase.GUIDFromAssetPath(path);
-			uint id = (uint)guid.GetHashCode();
+			ulong id = guid.GetAssetId64();
 			return id;
 		}
 
