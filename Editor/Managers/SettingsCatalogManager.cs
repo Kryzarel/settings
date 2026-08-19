@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 
@@ -8,7 +7,7 @@ namespace Kryz.Settings.Editor
 	{
 		private class PostProcessor : AssetPostprocessor
 		{
-			private const int version = 1;
+			private const int version = 5;
 
 			public override uint GetVersion() => version;
 
@@ -20,8 +19,9 @@ namespace Kryz.Settings.Editor
 				if (catalog.version != version)
 				{
 					catalog.version = version;
+					catalog.assets.Clear();
 					setDirty = true;
-					UpdateByGUID(catalog, AssetDatabase.FindAssetGUIDs(""));
+					UpdateByGUID(catalog, AssetDatabase.FindAssetGUIDs("t:" + typeof(SettingsAsset).Name));
 				}
 				else
 				{
@@ -113,7 +113,8 @@ namespace Kryz.Settings.Editor
 				return false;
 			}
 
-			return catalog.TryAdd(id, settingsAsset);
+			catalog[id] = settingsAsset;
+			return true;
 		}
 	}
 }

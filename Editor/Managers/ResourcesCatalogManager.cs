@@ -9,7 +9,7 @@ namespace Kryz.Settings.Editor
 	{
 		private class PostProcessor : AssetPostprocessor
 		{
-			private const int version = 1;
+			private const int version = 3;
 
 			public override uint GetVersion() => version;
 
@@ -21,6 +21,7 @@ namespace Kryz.Settings.Editor
 				if (catalog.version != version)
 				{
 					catalog.version = version;
+					catalog.assets.Clear();
 					setDirty = true;
 					UpdateByGUID(catalog, AssetDatabase.FindAssetGUIDs(""));
 				}

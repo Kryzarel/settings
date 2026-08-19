@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Kryz.UnityUtils;
@@ -7,8 +8,15 @@ namespace Kryz.Settings
 {
 	public class SettingsCatalog : SingletonScriptableObject<SettingsCatalog>, ISerializationCallbackReceiver
 	{
+		[Serializable]
+		private struct Data
+		{
+			public ulong Id;
+			public SettingsAsset Asset;
+		}
+
 		[SerializeField, ReadOnly] internal int version;
-		[SerializeField, ReadOnly] List<SettingsAsset> assetList = new();
+		[SerializeField, ReadOnly] List<Data> assetList = new();
 
 		internal readonly Dictionary<ulong, SettingsAsset> assets = new();
 
@@ -20,9 +28,9 @@ namespace Kryz.Settings
 		{
 			assetList.Clear();
 
-			foreach (SettingsAsset item in assets.Values)
+			foreach (KeyValuePair<ulong, SettingsAsset> item in assets)
 			{
-				assetList.Add(item);
+				assetList.Add(new Data { Id = item.Key, Asset = item.Value });
 			}
 		}
 
@@ -30,9 +38,9 @@ namespace Kryz.Settings
 		{
 			assets.Clear();
 
-			foreach (SettingsAsset item in assetList)
+			foreach (Data item in assetList)
 			{
-				assets[item.Id] = item;
+				assets[item.Id] = item.Asset;
 			}
 		}
 	}
