@@ -6,12 +6,45 @@ namespace Kryz.Settings
 	{
 		private readonly Dictionary<ulong, SettingsAsset> settings;
 
+		private readonly SettingsStore settingsStore;
+
+		private class SettingsStore : ISettingsStore
+		{
+			private readonly Dictionary<ulong, SettingsAsset> settings;
+
+			public SettingsStore(Dictionary<ulong, SettingsAsset> settings) => this.settings = settings;
+
+			public void Add(ulong id, SettingsAsset asset) => settings.Add(id, asset);
+			public bool Remove(ulong id) => settings.Remove(id);
+			public bool TryGetValue(ulong id, out SettingsAsset asset) => settings.TryGetValue(id, out asset);
+		}
+
 		public SettingsDatabase()
 		{
 			settings = new();
+			settingsStore = new(settings);
 		}
 
-		public T Get<T>(ulong id) where T : SettingsAsset => (T)settings[id];
+		public SettingsDatabase(Dictionary<ulong, SettingsAsset> settings)
+		{
+			this.settings = settings;
+			settingsStore = new(settings);
+		}
+
+		public SettingsAsset Get(ulong id)
+		{
+			return settings[id];
+		}
+
+		public bool TryGet(ulong id, out SettingsAsset asset)
+		{
+			return settings.TryGetValue(id, out asset);
+		}
+
+		public T Get<T>(ulong id) where T : SettingsAsset
+		{
+			return (T)settings[id];
+		}
 
 		public bool TryGet<T>(ulong id, out T asset) where T : SettingsAsset
 		{
@@ -34,6 +67,7 @@ namespace Kryz.Settings
 				{
 					if (asset != null)
 					{
+						asset = null;
 						return false;
 					}
 					asset = derived;
@@ -62,6 +96,11 @@ namespace Kryz.Settings
 					yield return derived;
 				}
 			}
+		}
+
+		public void UpdateSettings(ISettingsUpdater settingsUpdater)
+		{
+			settingsUpdater.UpdateSettings(settingsStore);
 		}
 	}
 }

@@ -22,7 +22,7 @@ namespace Kryz.Settings
 
 		private ReadOnlyDictionary<ulong, string> readOnlyAssets;
 
-		public IReadOnlyDictionary<ulong, string> Assets => readOnlyAssets ??= new(assets);
+		public ReadOnlyDictionary<ulong, string> Assets => readOnlyAssets ??= new(assets);
 
 		void ISerializationCallbackReceiver.OnBeforeSerialize()
 		{

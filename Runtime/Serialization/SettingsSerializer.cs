@@ -1,82 +1,76 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using UnityEngine;
 
 namespace Kryz.Settings
 {
-	public class SettingsSerializer
+	public static class SettingsSerializer
 	{
-		private static readonly string[] lineSeparators = { "\r\n", "\r", "\n" };
-
 		public struct Header
 		{
 			public ulong id;
-			public string type;
 			public bool enabled;
 		}
 
-		public static string Serialize(IEnumerable<SettingsAsset> assets)
+		public static void Serialize<T>(T settings, TextWriter writer) where T : IEnumerable<SettingsAsset>
 		{
-			StringBuilder sb = new();
-			foreach (SettingsAsset item in assets)
+			Dictionary<Type, List<SettingsAsset>> settingsByType = new();
+
+			foreach (SettingsAsset setting in settings)
 			{
-				sb.AppendLine(JsonUtility.ToJson(item));
+				Type type = setting.GetType();
+
+				if (!settingsByType.TryGetValue(type, out List<SettingsAsset> list))
+				{
+					settingsByType[type] = list = new List<SettingsAsset>();
+				}
+
+				list.Add(setting);
 			}
-			return sb.ToString();
-		}
 
-		public static List<SettingsAsset> Deserialize(string json)
-		{
-			List<SettingsAsset> settings = new();
-			string[] lines = json.Split(lineSeparators, StringSplitOptions.None);
-			foreach (string line in lines)
+			foreach (KeyValuePair<Type, List<SettingsAsset>> item in settingsByType)
 			{
-				if (string.IsNullOrEmpty(line)) continue;
-				SettingsAsset asset = null;
-				OverwriteOrCreateSetting(line, ref asset);
-				settings.Add(asset);
-			}
-			return settings;
-		}
+				writer.WriteLine(item.Key.AssemblyQualifiedName);
 
-		public static void SerializeToFile(IEnumerable<SettingsAsset> assets, string filePath)
-		{
-			using StreamWriter writer = new(filePath);
-
-			foreach (SettingsAsset item in assets)
-			{
-				writer.WriteLine(JsonUtility.ToJson(item));
+				foreach (SettingsAsset setting in item.Value)
+				{
+					writer.WriteLine(JsonUtility.ToJson(setting));
+				}
 			}
 		}
 
-		public static List<SettingsAsset> DeserializeFromFile(string filePath)
+		public static void Deserialize(ISettingsStore settings, TextReader reader)
 		{
-			List<SettingsAsset> settings = new();
-			using StreamReader reader = new(filePath);
+			Type type = null;
 
-			while (!reader.EndOfStream)
+			for (string line = reader.ReadLine(); line != null; line = reader.ReadLine())
 			{
-				string line = reader.ReadLine();
-				SettingsAsset asset = null;
-				OverwriteOrCreateSetting(line, ref asset);
-				settings.Add(asset);
+				if (string.IsNullOrWhiteSpace(line))
+					continue;
+
+				if (!line.StartsWith('{'))
+				{
+					type = Type.GetType(line);
+					continue;
+				}
+
+				Header header = JsonUtility.FromJson<Header>(line);
+
+				if (!header.enabled)
+				{
+					settings.Remove(header.id);
+					continue;
+				}
+
+				if (!settings.TryGetValue(header.id, out SettingsAsset asset))
+				{
+					asset = (SettingsAsset)ScriptableObject.CreateInstance(type);
+					settings.Add(header.id, asset);
+				}
+
+				JsonUtility.FromJsonOverwrite(line, asset);
 			}
-
-			return settings;
-		}
-
-		public static void OverwriteOrCreateSetting(string json, ref SettingsAsset asset)
-		{
-			if (asset == null)
-			{
-				Header header = JsonUtility.FromJson<Header>(json);
-				Type type = Type.GetType(header.type);
-				asset = (SettingsAsset)ScriptableObject.CreateInstance(type);
-			}
-
-			JsonUtility.FromJsonOverwrite(json, asset);
 		}
 	}
 }
