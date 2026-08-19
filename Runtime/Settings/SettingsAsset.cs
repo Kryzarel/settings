@@ -17,7 +17,7 @@ namespace Kryz.Settings
 
 		public void OnBeforeSerialize()
 		{
-			type = GetType().FullName;
+			type = GetType().AssemblyQualifiedName;
 		}
 
 		public void OnAfterDeserialize()

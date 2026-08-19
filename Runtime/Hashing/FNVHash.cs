@@ -14,6 +14,12 @@ namespace Kryz.Settings
 			return bytes;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static ReadOnlySpan<byte> GetBytes(string value)
+		{
+			return MemoryMarshal.AsBytes(value.AsSpan());
+		}
+
 		public static class UInt64
 		{
 			private const ulong offsetBasis = 14695981039346656037;
