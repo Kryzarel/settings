@@ -8,6 +8,11 @@ namespace Kryz.Settings
 
 		public SettingsUpdater(TextReader reader) => this.reader = reader;
 
+		public void UpdateSettings(ISettingsStore settings)
+		{
+			SettingsSerializer.Deserialize(settings, reader);
+		}
+
 		public static void UpdateFromFile(ISettingsDatabase settingsDatabase, string path)
 		{
 			using StreamReader reader = new(path);
@@ -18,11 +23,6 @@ namespace Kryz.Settings
 		{
 			using StringReader reader = new(contents);
 			settingsDatabase.UpdateSettings(new SettingsUpdater(reader));
-		}
-
-		public void UpdateSettings(ISettingsStore settings)
-		{
-			SettingsSerializer.Deserialize(settings, reader);
 		}
 	}
 }

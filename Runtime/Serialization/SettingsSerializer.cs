@@ -13,7 +13,7 @@ namespace Kryz.Settings
 			public bool enabled;
 		}
 
-		public static void Serialize<T>(T settings, TextWriter writer) where T : IEnumerable<SettingsAsset>
+		public static void Serialize(IEnumerable<SettingsAsset> settings, TextWriter writer)
 		{
 			Dictionary<Type, List<SettingsAsset>> settingsByType = new();
 
@@ -73,6 +73,11 @@ namespace Kryz.Settings
 				}
 				else
 				{
+					if (!typeof(SettingsAsset).IsAssignableFrom(type))
+					{
+						Debug.LogError($"{type.AssemblyQualifiedName} does not derive from {typeof(SettingsAsset).AssemblyQualifiedName}");
+						continue;
+					}
 					asset = (SettingsAsset)ScriptableObject.CreateInstance(type);
 					settings.Add(header.id, asset);
 				}

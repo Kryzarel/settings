@@ -15,7 +15,7 @@ namespace Kryz.Settings.Editor
 			public static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths, bool didDomainReload)
 			{
 				bool setDirty = false;
-				SettingsCatalog catalog = SingletonScriptableObjectUtils.GetSingleton<SettingsCatalog>();
+				SettingsCatalog catalog = SingletonScriptableObjectUtils.Get<SettingsCatalog>();
 
 				if (catalog.version != version)
 				{
