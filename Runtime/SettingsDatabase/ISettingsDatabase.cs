@@ -15,6 +15,6 @@ namespace Kryz.Settings
 		void GetAllSettingsOfType<T>(IList<T> values) where T : SettingsAsset;
 		IEnumerable<T> GetAllSettingsOfType<T>() where T : SettingsAsset;
 
-		void UpdateSettings(ISettingsUpdater settingsUpdater);
+		void UpdateSettings<T>(T updater) where T : ISettingsUpdater;
 	}
 }

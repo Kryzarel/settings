@@ -21,14 +21,14 @@ namespace Kryz.Settings
 
 		public SettingsDatabase()
 		{
-			settings = new();
-			settingsStore = new(settings);
+			settings = new Dictionary<ulong, SettingsAsset>();
+			settingsStore = new SettingsStore(settings);
 		}
 
-		public SettingsDatabase(Dictionary<ulong, SettingsAsset> settings)
+		public SettingsDatabase(IEnumerable<KeyValuePair<ulong, SettingsAsset>> settings)
 		{
-			this.settings = settings;
-			settingsStore = new(settings);
+			this.settings = new Dictionary<ulong, SettingsAsset>(settings);
+			settingsStore = new SettingsStore(this.settings);
 		}
 
 		public SettingsAsset Get(ulong id)
@@ -98,9 +98,9 @@ namespace Kryz.Settings
 			}
 		}
 
-		public void UpdateSettings(ISettingsUpdater settingsUpdater)
+		public void UpdateSettings<T>(T updater) where T : ISettingsUpdater
 		{
-			settingsUpdater.UpdateSettings(settingsStore);
+			updater.UpdateSettings(settingsStore);
 		}
 	}
 }
