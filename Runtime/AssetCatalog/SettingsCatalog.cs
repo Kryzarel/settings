@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Kryz.Settings
 {
-	public class SettingsCatalog : SingletonScriptableObject<SettingsCatalog>, ISerializationCallbackReceiver
+	public class SettingsCatalog : SingletonScriptableObject<SettingsCatalog>, ISerializationCallbackReceiver, ISettingsStore
 	{
 		[Serializable]
 		private struct Data
@@ -43,5 +43,9 @@ namespace Kryz.Settings
 				assets[item.Id] = item.Asset;
 			}
 		}
+
+		public void Add(ulong id, SettingsAsset asset) => assets.Add(id, asset);
+		public bool Remove(ulong id) => assets.Remove(id);
+		public bool TryGetValue(ulong id, out SettingsAsset asset) => assets.TryGetValue(id, out asset);
 	}
 }

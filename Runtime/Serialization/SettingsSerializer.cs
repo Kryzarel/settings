@@ -7,7 +7,7 @@ namespace Kryz.Settings
 {
 	public static class SettingsSerializer
 	{
-		public struct Header
+		private struct Header
 		{
 			public ulong id;
 			public bool enabled;
@@ -63,7 +63,15 @@ namespace Kryz.Settings
 					continue;
 				}
 
-				if (!settings.TryGetValue(header.id, out SettingsAsset asset))
+				if (settings.TryGetValue(header.id, out SettingsAsset asset))
+				{
+					Type assetType = asset.GetType();
+					if (assetType != type)
+					{
+						Debug.LogWarning($"Type mismatch between json ({type.AssemblyQualifiedName}) and setting ({type.AssemblyQualifiedName}). Id: {header.id}", asset);
+					}
+				}
+				else
 				{
 					asset = (SettingsAsset)ScriptableObject.CreateInstance(type);
 					settings.Add(header.id, asset);
