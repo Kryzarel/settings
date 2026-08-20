@@ -15,7 +15,7 @@ namespace Kryz.Settings
 			public string Path;
 		}
 
-		[SerializeField, ReadOnly] internal int version;
+		[SerializeField, ReadOnly, HideInInspector] internal int version;
 		[SerializeField, ReadOnly] List<Data> assetList = new();
 
 		internal readonly Dictionary<ulong, string> assets = new();
