@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 
 namespace Kryz.Settings.Editor
 {
-	[CustomPropertyDrawer(typeof(AssetPicker<>), useForChildren: true)]
+	[CustomPropertyDrawer(typeof(IAssetPicker<>), useForChildren: true)]
 	public class AssetPickerDrawer : PropertyDrawer
 	{
 		private const string warning = "<b>Warning:</b> The assigned object is not in " + nameof(ResourcesCatalog) + " nor " + nameof(SettingsCatalog) + ".";
@@ -91,9 +91,17 @@ namespace Kryz.Settings.Editor
 		{
 			for (Type current = type; current != null; current = current.BaseType)
 			{
-				if (current.IsGenericType && current.GetGenericTypeDefinition() == typeof(AssetPicker<>))
+				if (current.IsGenericType && current.GetGenericTypeDefinition() == typeof(IAssetPicker<>))
 				{
 					return current.GenericTypeArguments[0];
+				}
+
+				foreach (Type interfaceType in type.GetInterfaces())
+				{
+					if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IAssetPicker<>))
+					{
+						return interfaceType.GenericTypeArguments[0];
+					}
 				}
 			}
 			return default;

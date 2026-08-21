@@ -1,9 +1,13 @@
 using System;
+using UnityEngine;
 
 namespace Kryz.Settings
 {
 	[Serializable]
-	public class SettingsPicker<T> : AssetPicker<T> where T : SettingsAsset
+	public struct SettingsPicker<T> : IAssetPicker<T> where T : SettingsAsset
 	{
+		[SerializeField] ulong id;
+
+		public readonly ulong Id => id;
 	}
 }
