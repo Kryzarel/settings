@@ -12,6 +12,8 @@ namespace Kryz.Settings.Editor
 	{
 		private const string warning = "<b>Warning:</b> The assigned object is not in " + nameof(ResourcesCatalog) + " nor " + nameof(SettingsCatalog) + ".";
 
+		private static ulong? copyBuffer;
+
 		public override VisualElement CreatePropertyGUI(SerializedProperty property)
 		{
 			VisualElement root = new();
@@ -50,7 +52,35 @@ namespace Kryz.Settings.Editor
 				idProperty.ulongValue = GetIdFromAsset(evt.newValue);
 				idProperty.serializedObject.ApplyModifiedProperties();
 			});
+
+			ContextualMenuManipulator contextualMenuManipulator = new(evt => ShowContextualMenu(evt, idProperty));
+			root.AddManipulator(contextualMenuManipulator);
 			return root;
+		}
+
+		private void ShowContextualMenu(ContextualMenuPopulateEvent evt, SerializedProperty property)
+		{
+			evt.menu.AppendAction("Copy", _ => CopyProperty(property));
+			evt.menu.AppendAction("Paste", _ => PasteProperty(property), CanPasteProperty);
+		}
+
+		private void CopyProperty(SerializedProperty property)
+		{
+			copyBuffer = property.ulongValue;
+		}
+
+		private void PasteProperty(SerializedProperty property)
+		{
+			if (copyBuffer.HasValue)
+			{
+				property.ulongValue = copyBuffer.Value;
+				property.serializedObject.ApplyModifiedProperties();
+			}
+		}
+
+		private DropdownMenuAction.Status CanPasteProperty(DropdownMenuAction action)
+		{
+			return copyBuffer.HasValue ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled;
 		}
 
 		private static bool IsValidId(ulong id)
