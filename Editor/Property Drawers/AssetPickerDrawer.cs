@@ -12,8 +12,6 @@ namespace Kryz.Settings.Editor
 	{
 		private const string warning = "<b>Warning:</b> The assigned object is not in " + nameof(ResourcesCatalog) + " nor " + nameof(SettingsCatalog) + ".";
 
-		private static ulong? copyBuffer;
-
 		public override VisualElement CreatePropertyGUI(SerializedProperty property)
 		{
 			VisualElement root = new();
@@ -66,21 +64,25 @@ namespace Kryz.Settings.Editor
 
 		private void CopyProperty(SerializedProperty property)
 		{
-			copyBuffer = property.ulongValue;
+			EditorGUIUtility.systemCopyBuffer = property.ulongValue.ToString();
 		}
 
 		private void PasteProperty(SerializedProperty property)
 		{
-			if (copyBuffer.HasValue)
+			if (ulong.TryParse(EditorGUIUtility.systemCopyBuffer, out ulong value) && IsValidId(value))
 			{
-				property.ulongValue = copyBuffer.Value;
+				property.ulongValue = value;
 				property.serializedObject.ApplyModifiedProperties();
 			}
 		}
 
 		private DropdownMenuAction.Status CanPasteProperty(DropdownMenuAction action)
 		{
-			return copyBuffer.HasValue ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled;
+			if (ulong.TryParse(EditorGUIUtility.systemCopyBuffer, out ulong value) && IsValidId(value))
+			{
+				return DropdownMenuAction.Status.Normal;
+			}
+			return DropdownMenuAction.Status.Disabled;
 		}
 
 		private static bool IsValidId(ulong id)
