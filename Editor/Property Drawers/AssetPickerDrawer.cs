@@ -10,35 +10,27 @@ namespace Kryz.Settings.Editor
 	[CustomPropertyDrawer(typeof(IAssetPicker<>), useForChildren: true)]
 	public class AssetPickerDrawer : PropertyDrawer
 	{
-		private const string warning = "<b>Warning:</b> The assigned object is not in " + nameof(ResourcesCatalog) + " nor " + nameof(SettingsCatalog) + ".";
+		private const string settingsWarning = "<b>Warning:</b> Object not found in " + nameof(SettingsCatalog);
+		private const string resourcesWarning = "<b>Warning:</b> Object not found in " + nameof(ResourcesCatalog);
 
 		public override VisualElement CreatePropertyGUI(SerializedProperty property)
 		{
-			VisualElement root = new();
-
-			Type pickerType = property.boxedValue.GetType();
-
 			ObjectField objectField = new(property.displayName)
 			{
-				objectType = GetAssetType(pickerType),
+				objectType = GetAssetType(fieldInfo.FieldType),
 				allowSceneObjects = false
 			};
-			objectField.AddToClassList("unity-base-field__aligned");
-			root.Add(objectField);
+			objectField.AddToClassList(ObjectField.alignedFieldUssClassName);
 
-			HelpBox warningBox = new(warning, HelpBoxMessageType.Warning);
-			warningBox.style.display = DisplayStyle.None;
-			root.Add(warningBox);
+			bool isSettings = fieldInfo.FieldType.GetGenericTypeDefinition() == typeof(SettingsPicker<>);
+			HelpBox warningBox = new(isSettings ? settingsWarning : resourcesWarning, HelpBoxMessageType.Warning);
+
+			objectField.RegisterCallback<AttachToPanelEvent>(evt =>
+			{
+				objectField.parent.Add(warningBox);
+			});
 
 			SerializedProperty idProperty = property.FindPropertyRelative("id");
-
-			void Refresh(SerializedProperty idProperty)
-			{
-				ulong id = idProperty.ulongValue;
-				Object asset = GetAssetFromId(id, objectField.objectType);
-				objectField.SetValueWithoutNotify(asset);
-				warningBox.style.display = id == 0 || IsValidId(id) ? DisplayStyle.None : DisplayStyle.Flex;
-			}
 
 			Refresh(idProperty);
 
@@ -51,23 +43,30 @@ namespace Kryz.Settings.Editor
 				idProperty.serializedObject.ApplyModifiedProperties();
 			});
 
-			ContextualMenuManipulator contextualMenuManipulator = new(evt => ShowContextualMenu(evt, idProperty));
-			root.AddManipulator(contextualMenuManipulator);
-			return root;
+			void Refresh(SerializedProperty idProperty)
+			{
+				ulong id = idProperty.ulongValue;
+				Object asset = GetAssetFromId(id, objectField.objectType);
+				objectField.SetValueWithoutNotify(asset);
+				warningBox.style.display = IsValidId(id) ? DisplayStyle.None : DisplayStyle.Flex;
+			}
+
+			objectField.AddManipulator(new ContextualMenuManipulator(evt => ShowContextualMenu(evt, idProperty)));
+			return objectField;
 		}
 
-		private void ShowContextualMenu(ContextualMenuPopulateEvent evt, SerializedProperty property)
+		private static void ShowContextualMenu(ContextualMenuPopulateEvent evt, SerializedProperty property)
 		{
 			evt.menu.AppendAction("Copy", _ => CopyProperty(property));
 			evt.menu.AppendAction("Paste", _ => PasteProperty(property), CanPasteProperty);
 		}
 
-		private void CopyProperty(SerializedProperty property)
+		private static void CopyProperty(SerializedProperty property)
 		{
 			EditorGUIUtility.systemCopyBuffer = property.ulongValue.ToString();
 		}
 
-		private void PasteProperty(SerializedProperty property)
+		private static void PasteProperty(SerializedProperty property)
 		{
 			if (ulong.TryParse(EditorGUIUtility.systemCopyBuffer, out ulong value) && IsValidId(value))
 			{
@@ -76,7 +75,7 @@ namespace Kryz.Settings.Editor
 			}
 		}
 
-		private DropdownMenuAction.Status CanPasteProperty(DropdownMenuAction action)
+		private static DropdownMenuAction.Status CanPasteProperty(DropdownMenuAction action)
 		{
 			if (ulong.TryParse(EditorGUIUtility.systemCopyBuffer, out ulong value) && IsValidId(value))
 			{
@@ -87,7 +86,7 @@ namespace Kryz.Settings.Editor
 
 		private static bool IsValidId(ulong id)
 		{
-			return ResourcesCatalog.Instance.Assets.ContainsKey(id) || SettingsCatalog.Instance.Assets.ContainsKey(id);
+			return id == 0 || ResourcesCatalog.Instance.Assets.ContainsKey(id) || SettingsCatalog.Instance.Assets.ContainsKey(id);
 		}
 
 		private static Object GetAssetFromId(ulong id, Type type)
