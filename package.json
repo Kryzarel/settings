@@ -1,6 +1,6 @@
 {
   "name": "com.kryzarel.settings",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "displayName": "Kryz - Settings",
   "description": "A framework for Unity to use Scriptable Objects as data with some nice features.",
   "license": "MIT",
