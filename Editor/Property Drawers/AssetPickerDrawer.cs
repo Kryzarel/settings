@@ -15,7 +15,7 @@ namespace Kryz.Settings.Editor
 
 		public override VisualElement CreatePropertyGUI(SerializedProperty property)
 		{
-			ObjectField objectField = new(property.displayName)
+			ObjectField objectField = new(preferredLabel)
 			{
 				objectType = GetAssetType(fieldInfo.FieldType),
 				allowSceneObjects = false
