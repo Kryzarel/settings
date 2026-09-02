@@ -15,20 +15,24 @@ namespace Kryz.Settings.Editor
 
 		public override VisualElement CreatePropertyGUI(SerializedProperty property)
 		{
+			VisualElement root = new();
+
 			ObjectField objectField = new(preferredLabel)
 			{
 				objectType = GetAssetType(fieldInfo.FieldType),
 				allowSceneObjects = false
 			};
 			objectField.AddToClassList(ObjectField.alignedFieldUssClassName);
+			root.Add(objectField);
 
 			bool isSettings = fieldInfo.FieldType.GetGenericTypeDefinition() == typeof(SettingsPicker<>);
 			HelpBox warningBox = new(isSettings ? settingsWarning : resourcesWarning, HelpBoxMessageType.Warning);
+			root.Add(warningBox);
 
-			objectField.RegisterCallback<AttachToPanelEvent>(evt =>
-			{
-				objectField.parent.Add(warningBox);
-			});
+			// objectField.RegisterCallback<AttachToPanelEvent>(evt =>
+			// {
+			// 	objectField.parent.Add(warningBox);
+			// });
 
 			SerializedProperty idProperty = property.FindPropertyRelative("id");
 
@@ -51,8 +55,8 @@ namespace Kryz.Settings.Editor
 				warningBox.style.display = IsValidId(id) ? DisplayStyle.None : DisplayStyle.Flex;
 			}
 
-			objectField.AddManipulator(new ContextualMenuManipulator(evt => ShowContextualMenu(evt, idProperty)));
-			return objectField;
+			root.AddManipulator(new ContextualMenuManipulator(evt => ShowContextualMenu(evt, idProperty)));
+			return root;
 		}
 
 		private static void ShowContextualMenu(ContextualMenuPopulateEvent evt, SerializedProperty property)
