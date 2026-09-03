@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -17,15 +18,17 @@ namespace Kryz.Settings.Editor
 		{
 			VisualElement root = new();
 
+			Type fieldType = GetFieldType(fieldInfo.FieldType);
+
 			ObjectField objectField = new(preferredLabel)
 			{
-				objectType = GetAssetType(fieldInfo.FieldType),
+				objectType = GetAssetType(fieldType),
 				allowSceneObjects = false
 			};
 			objectField.AddToClassList(ObjectField.alignedFieldUssClassName);
 			root.Add(objectField);
 
-			bool isSettings = fieldInfo.FieldType.GetGenericTypeDefinition() == typeof(SettingsPicker<>);
+			bool isSettings = fieldType.GetGenericTypeDefinition() == typeof(SettingsPicker<>);
 			HelpBox warningBox = new(isSettings ? settingsWarning : resourcesWarning, HelpBoxMessageType.Warning);
 			root.Add(warningBox);
 
@@ -122,6 +125,23 @@ namespace Kryz.Settings.Editor
 			return id;
 		}
 
+		private static Type GetFieldType(Type fieldType)
+		{
+			if (typeof(IList).IsAssignableFrom(fieldType))
+			{
+				if (fieldType.IsArray)
+				{
+					return fieldType.GetElementType();
+				}
+				else if (typeof(IList).IsAssignableFrom(fieldType))
+				{
+					return fieldType.IsGenericType ? fieldType.GenericTypeArguments[0] : typeof(object);
+				}
+			}
+
+			return fieldType;
+		}
+
 		private static Type GetAssetType(Type type)
 		{
 			for (Type current = type; current != null; current = current.BaseType)
@@ -139,7 +159,8 @@ namespace Kryz.Settings.Editor
 					}
 				}
 			}
-			return default;
+
+			return null;
 		}
 	}
 }
